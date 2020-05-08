@@ -192,7 +192,12 @@ namespace dotnetAccountant
 			}
 		}
 
-		// Implement IAuthenticationProvider 
+		///
+			/// <summary>
+			/// Implement <see cref="IAuthenticationProvider">. This method is called everytime when user make a request.
+			/// </summary>
+			/// <param name="request"></param>
+			/// <returns></returns>
 		public async Task AuthenticateRequestAsync(HttpRequestMessage request)
 		{
 			request.Headers.Authorization = new AuthenticationHeaderValue("bearer", await GetAccessToken());
