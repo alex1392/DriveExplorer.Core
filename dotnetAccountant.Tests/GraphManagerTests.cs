@@ -11,10 +11,14 @@ namespace dotnetAccountant.Tests
 	public class GraphManagerTests
 	{
 		private IConfigurationRoot appConfig;
-		public GraphManagerTests(){
+		private AuthProvider authProvider;
+
+		public GraphManagerTests()
+		{
 			appConfig = Program.GetAppConfig();
 			AuthProvider.Initialize(appConfig);
 			GraphManager.Initialize(AuthProvider.Instance);
+			authProvider = AuthProvider.Instance;
 		}
 
 		[Fact]
@@ -29,12 +33,23 @@ namespace dotnetAccountant.Tests
 		}
 
 		[Fact]
+		public void TimeoutTest()
+		{
+			//Given
+			var graphManager = GraphManager.Instance;
+			//When
+
+			//Then
+			Assert.ThrowsAsync(typeof(TimeoutException),
+				() => graphManager.GetMeAsync(millisecondsDelay: (int)Timeouts.Silent.TotalMilliseconds));
+		}
+
+		[Fact]
 		public void GetMeTest()
 		{
 			//Given
 			// set scopes of authProvider before generating graphManager
-			var authProvider = AuthProvider.Instance;
-			authProvider.Scopes = new [] { Permissions.User.Read };
+			authProvider.Scopes = new[] { Permissions.User.Read };
 			var accessToken = authProvider.GetAccessTokenWithUsernamePassword().Result;
 			var graphManager = GraphManager.Instance;
 			string Username = appConfig[nameof(Username)];
@@ -48,17 +63,27 @@ namespace dotnetAccountant.Tests
 		public void SearchDriveTest()
 		{
 			//Given
-			var authProvider = AuthProvider.Instance;
 			authProvider.Scopes = new[] { Permissions.Files.Read };
 			var accessToken = authProvider.GetAccessTokenWithUsernamePassword().Result;
 			var graphManager = GraphManager.Instance;
 			//When
 			var items = graphManager.SearchDriveAsync(".csv",
-				new [] {Selects.name, Selects.id, Selects.downloadUrl},
-				new [] {new QueryOption("$top", "5")}).Result.CurrentPage;
+				new[] { Selects.name, Selects.id, Selects.downloadUrl },
+				new[] { new QueryOption("$top", "5") }).Result.CurrentPage;
 			var file = items.First();
 			//Then
 			Assert.NotNull(file);
+		}
+
+		[Fact]
+		public void DownloadFileTest()
+		{
+			//Given
+			authProvider.Scopes = new[] { Permissions.Files.Read };
+			var accessToken = authProvider.GetAccessTokenWithUsernamePassword().Result;
+			//When
+
+			//Then
 		}
 	}
 }

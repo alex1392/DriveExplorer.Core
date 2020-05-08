@@ -32,16 +32,20 @@ namespace dotnetAccountant
 		}
 
 		///
-			/// <summary> 
+			/// <summary>
 			/// Requires scopes: <see cref="Permissions.User.Read"/>
 			/// </summary>
-		public async Task<User> GetMeAsync()
+			/// <param name="millisecondsDelay">Delay this task for testing.</param>
+			/// <returns></returns>
+		public async Task<User> GetMeAsync(int millisecondsDelay = 0)
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
 				try
 				{
-					return await client.Me.Request().GetAsync(cts.Token);
+					await Task.Delay(millisecondsDelay);
+					var result = await client.Me.Request().GetAsync(cts.Token);
+					return result;
 				}
 				catch (Exception ex)
 				{
