@@ -9,7 +9,7 @@ namespace dotnetAccountant
 
 		static void Main(string[] args)
         {
-            Console.WriteLine($"Hello {args?[0]}");
+            Console.WriteLine($"Hello {(args.Length > 0 ? args[0] : "")}");
 
 			// build app configuration
 			AppConfig = GetAppConfig();
