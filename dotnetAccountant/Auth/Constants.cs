@@ -2,6 +2,10 @@ using System;
 
 namespace dotnetAccountant
 {
+	public static class Urls{
+		public const string BaseUrl = "https://graph.microsoft.com/v1.0/";
+	}
+
 	public static class Permissions
 	{
 		public static class User
@@ -31,7 +35,14 @@ namespace dotnetAccountant
 		public const string name = "name";
 		public const string size = "size";
 		public const string webUrl = "webUrl";
+		/// <summary>
+		/// Not working
+		/// </summary>
+		public const string content = "content"; 
 		public const string createdDateTime = "createdDateTime";
+		/// <summary>
+		/// Not working
+		/// </summary>
 		public const string downloadUrl = "@microsoft.graph.downloadUrl";
 	}
 }
