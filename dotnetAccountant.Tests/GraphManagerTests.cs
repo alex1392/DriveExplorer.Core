@@ -5,6 +5,9 @@ using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using Microsoft.Graph;
 using System.Linq;
+using System.Net;
+using System.IO;
+using System.Text;
 
 namespace dotnetAccountant.Tests
 {
@@ -50,11 +53,11 @@ namespace dotnetAccountant.Tests
 			//Given
 			// set scopes of authProvider before generating graphManager
 			authProvider.Scopes = new[] { Permissions.User.Read };
-			var accessToken = authProvider.GetAccessTokenWithUsernamePassword().Result;
 			var graphManager = GraphManager.Instance;
 			string Username = appConfig[nameof(Username)];
 			//When
 			var user = graphManager.GetMeAsync().Result;
+			Console.WriteLine(user.DisplayName);
 			//Then
 			Assert.Equal(user.Mail, Username);
 		}
@@ -64,13 +67,15 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			var accessToken = authProvider.GetAccessTokenWithUsernamePassword().Result;
 			var graphManager = GraphManager.Instance;
 			//When
-			var items = graphManager.SearchDriveAsync(".csv",
-				new[] { Selects.name, Selects.id, Selects.downloadUrl },
-				new[] { new QueryOption("$top", "5") }).Result.CurrentPage;
+			var items = graphManager.SearchDriveAsync("LICENSE.txt",
+				new[] {
+					new QueryOption("$top", "5"),
+					new QueryOption("$select", Selects.name + "," + Selects.id)
+					}).Result.CurrentPage;
 			var file = items.First();
+			Console.WriteLine(file.Name);
 			//Then
 			Assert.NotNull(file);
 		}
@@ -80,10 +85,62 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			var accessToken = authProvider.GetAccessTokenWithUsernamePassword().Result;
+			var graphManager = GraphManager.Instance;
 			//When
-
+			var item = graphManager.SearchDriveAsync("LICENSE.txt").Result.CurrentPage.First();
+			var stream = graphManager.GetFileAsync(item.Id).Result;
+			string content;
+			using (var reader = new StreamReader(stream))
+			{
+				content = reader.ReadToEnd();
+				Console.WriteLine(content);
+			}
 			//Then
+			Assert.True(!string.IsNullOrEmpty(content));
+		}
+
+		[Fact]
+		public void GetDriveRootTest()
+		{
+			//Given
+			authProvider.Scopes = new[] { Permissions.Files.Read };
+			var graphManager = GraphManager.Instance;
+			//When
+			var item = graphManager.GetDriveRootAsync().Result;
+			Console.WriteLine(item.Name);
+			//Then
+			Assert.NotNull(item);
+		}
+
+		[Fact]
+		public void UpdateFileTest()
+		{
+			//Given
+			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
+			var graphManager = GraphManager.Instance;
+			//When
+			var itemId = graphManager.SearchDriveAsync("LICENSE.txt").Result.FirstOrDefault()?.Id;
+			var content = "aaa";
+			var driveItem = graphManager.UpdateFileAsync(itemId, content).Result;
+			Console.WriteLine(driveItem.Name);
+			//Then
+			Assert.NotNull(driveItem);
+		}
+
+		[Fact]
+		public void UploadFileTest()
+		{
+			//Given
+			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
+			var graphManager = GraphManager.Instance;
+			//When
+			var content = "aaa";
+			var parentId = graphManager.GetDriveRootAsync().Result.Id;
+			var filename = "aaa.txt";
+			var response = graphManager.UploadFileAsync(parentId, filename, content).Result;
+			Console.WriteLine(response);
+			//Then
+			Assert.NotNull(response);
 		}
 	}
 }

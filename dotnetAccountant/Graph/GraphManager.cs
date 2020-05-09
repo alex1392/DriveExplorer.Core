@@ -5,6 +5,8 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace dotnetAccountant
 {
@@ -21,7 +23,8 @@ namespace dotnetAccountant
 			{
 				instance = new GraphManager(authProvider);
 			}
-			else {
+			else
+			{
 				Console.WriteLine($"{typeof(GraphManager)} has already been initialized.");
 			}
 		}
@@ -32,51 +35,77 @@ namespace dotnetAccountant
 		}
 
 		///
-			/// <summary>
-			/// Requires scopes: <see cref="Permissions.User.Read"/>
-			/// </summary>
-			/// <param name="millisecondsDelay">Delay this task for testing.</param>
-			/// <returns></returns>
+		/// <summary>
+		/// Requires scopes: <see cref="Permissions.User.Read"/>
+		/// </summary>
+		/// <param name="millisecondsDelay">Delay this task for testing.</param>
+		/// <returns></returns>
 		public async Task<User> GetMeAsync(int millisecondsDelay = 0)
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
-				try
-				{
-					await Task.Delay(millisecondsDelay);
-					var result = await client.Me.Request().GetAsync(cts.Token);
-					return result;
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error getting user: {ex.Message}");
-					throw ex;
-				}
+				await Task.Delay(millisecondsDelay);
+				var result = await client.Me.Request().GetAsync(cts.Token);
+				return result;
 			}
 		}
 
-		/// 
-			/// <summary>
-			/// Requires scopes: <see cref="Permissions.Files.Read"/>
-			/// </summary>
-			/// <param name="query"><see cref="string"> of search query</param>
-			/// <param name="selects"><see cref="IEnumerable"> of strings to select</param>
-			/// <returns></returns>
-		public async Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string query, IEnumerable<string> selects = null, IEnumerable<QueryOption> options = null)
+		/// <summary>
+		/// Requires scopes: <see cref="Permissions.Files.Read"/>
+		/// </summary>
+		/// <param name="query"><see cref="System.String"/> of search query</param>
+		/// <param name="options"><see cref="IEnumerable{T}"/> of strings to select</param>
+		/// <returns></returns>
+		public async Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string query, IEnumerable<QueryOption> options = null)
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
-				try
+				return await client.Me.Drive.Root.Search(query).Request(options).GetAsync(cts.Token);
+			}
+		}
+
+		public async Task<Stream> GetFileAsync(string id)
+		{
+			using (var cts = new CancellationTokenSource(Timeouts.Silent))
+			{
+				return await client.Me.Drive.Items[id].Content.Request().GetAsync(cts.Token);
+			}
+
+		}
+
+		public async Task<string> UploadFileAsync(string parentId, string filename, string content)
+		{
+			var urlString = Urls.BaseUrl + $"/me/drive/items/{parentId}:/{filename}:/content";
+			var uri = new Uri(urlString);
+			using (var cts = new CancellationTokenSource(Timeouts.Silent))
+			using (var request = new HttpRequestMessage(HttpMethod.Put, uri))
+			using (var stringContent = new StringContent(content, Encoding.UTF8))
+			{
+				request.Content = stringContent;
+				await AuthProvider.Instance.AuthenticateRequestAsync(request);
+				using (var response = await client.HttpProvider.SendAsync(request,HttpCompletionOption.ResponseContentRead, cts.Token))
 				{
-					return await client.Me.Drive.Root.Search(query).Request(options).Select(string.Join(',',selects)).GetAsync(cts.Token);
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error getting user: {ex.Message}");
-					throw ex;
+					return await response.Content.ReadAsStringAsync();
 				}
 			}
-			
+
+		}
+
+		public async Task<DriveItem> GetDriveRootAsync()
+		{
+			using (var cts = new CancellationTokenSource(Timeouts.Silent))
+			{
+				return await client.Me.Drive.Root.Request().GetAsync(cts.Token);
+			}
+		}
+
+		public async Task<DriveItem> UpdateFileAsync(string itemId, string content)
+		{
+			using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+			using (var cts = new CancellationTokenSource(Timeouts.Silent))
+			{
+				return await client.Me.Drive.Items[itemId].Content.Request().PutAsync<DriveItem>(stream, cts.Token);
+			}
 		}
 	}
 }
