@@ -92,19 +92,11 @@ namespace dotnetAccountant
 			// it is expired. Otherwise it returns the cached token.
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
-				try
-				{
-					var result = await msalClient
-						.AcquireTokenSilent(scopes, userAccount)
-						.ExecuteAsync(cts.Token);
-					userAccount = result?.Account;
-					return result?.AccessToken;
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Cannot get access token silently: {ex.Message}");
-					return null;
-				}
+				var result = await msalClient
+					.AcquireTokenSilent(scopes, userAccount)
+					.ExecuteAsync(cts.Token);
+				userAccount = result?.Account;
+				return result?.AccessToken;
 			}
 		}
 
@@ -113,26 +105,18 @@ namespace dotnetAccountant
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
-				try
+				string Username = appConfig[nameof(Username)];
+				string Password = appConfig[nameof(Password)];
+				var secureString = new SecureString();
+				foreach (var c in Password)
 				{
-					string Username = appConfig[nameof(Username)];
-					string Password = appConfig[nameof(Password)];
-					var secureString = new SecureString();
-					foreach (var c in Password)
-					{
-						secureString.AppendChar(c);
-					}
-					var result = await msalClient
-						.AcquireTokenByUsernamePassword(scopes, Username, secureString)
-						.ExecuteAsync(cts.Token);
-					userAccount = result?.Account;
-					return result?.AccessToken;
+					secureString.AppendChar(c);
 				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Cannot get access token with username and password: {ex.Message}");
-					return null;
-				}
+				var result = await msalClient
+					.AcquireTokenByUsernamePassword(scopes, Username, secureString)
+					.ExecuteAsync(cts.Token);
+				userAccount = result?.Account;
+				return result?.AccessToken;
 			}
 		}
 
@@ -140,30 +124,17 @@ namespace dotnetAccountant
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Interactive))
 			{
-				try
+				// Invoke device code flow so user can sign-in with a browser
+				var result = await msalClient.AcquireTokenWithDeviceCode(scopes, deviceCodeCallback =>
 				{
-					// Invoke device code flow so user can sign-in with a browser
-					var result = await msalClient.AcquireTokenWithDeviceCode(scopes, deviceCodeCallback =>
-					{
-						// display instructions to let user follow the device code flow
-						Console.WriteLine(deviceCodeCallback.Message);
-						// display instructions in testing output as well
-						Trace.WriteLine(deviceCodeCallback.Message);
-						return Task.FromResult(0);
-					}).ExecuteAsync(cts.Token);
-					userAccount = result?.Account;
-					return result?.AccessToken;
-				}
-				catch (TimeoutException)
-				{
-					Console.WriteLine("Sign-In operation timeout");
-					return null;
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error getting access token: {ex.Message}");
-					return null;
-				}
+					// display instructions to let user follow the device code flow
+					Console.WriteLine(deviceCodeCallback.Message);
+					// display instructions in testing output as well
+					Trace.WriteLine(deviceCodeCallback.Message);
+					return Task.FromResult(0);
+				}).ExecuteAsync(cts.Token);
+				userAccount = result?.Account;
+				return result?.AccessToken;
 			}
 		}
 
@@ -171,33 +142,19 @@ namespace dotnetAccountant
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Interactive))
 			{
-				try
-				{
-					var result = await msalClient
-						.AcquireTokenInteractive(scopes)
-						.ExecuteAsync(cts.Token);
-					userAccount = result?.Account;
-					return result?.AccessToken;
-				}
-				catch (TimeoutException)
-				{
-					Console.WriteLine("Sign-In operation timeout");
-					return null;
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error getting access token: {ex.Message}");
-					return null;
-				}
+				var result = await msalClient
+					.AcquireTokenInteractive(scopes)
+					.ExecuteAsync(cts.Token);
+				userAccount = result?.Account;
+				return result?.AccessToken;
 			}
 		}
 
-		///
-			/// <summary>
-			/// Implement <see cref="IAuthenticationProvider">. This method is called everytime when user make a request.
-			/// </summary>
-			/// <param name="request"></param>
-			/// <returns></returns>
+		/// <summary>
+		/// Implement <see cref="IAuthenticationProvider"/>. This method is called everytime when user make a request.
+		/// </summary>
+		/// <param name="request"></param>
+		/// <returns></returns>
 		public async Task AuthenticateRequestAsync(HttpRequestMessage request)
 		{
 			request.Headers.Authorization = new AuthenticationHeaderValue("bearer", await GetAccessToken());
