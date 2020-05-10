@@ -7,6 +7,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace dotnetAccountant
 {
@@ -34,28 +35,20 @@ namespace dotnetAccountant
 			client = new GraphServiceClient(authProvider);
 		}
 
-		///
-		/// <summary>
-		/// Requires scopes: <see cref="Permissions.User.Read"/>
-		/// </summary>
-		/// <param name="millisecondsDelay">Delay this task for testing.</param>
-		/// <returns></returns>
-		public async Task<User> GetMeAsync(int millisecondsDelay = 0)
+		public async Task<User> GetMeAsync()
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
-				await Task.Delay(millisecondsDelay);
-				var result = await client.Me.Request().GetAsync(cts.Token);
-				return result;
+				return await client.Me.Request().GetAsync(cts.Token);
 			}
 		}
 
 		/// <summary>
-		/// Requires scopes: <see cref="Permissions.Files.Read"/>
-		/// </summary>
-		/// <param name="query"><see cref="System.String"/> of search query</param>
-		/// <param name="options"><see cref="IEnumerable{T}"/> of strings to select</param>
-		/// <returns></returns>
+			/// Requires scopes: <see cref="Permissions.Files.Read"/>
+			/// </summary>
+			/// <param name="query"><see cref="System.String"/> of search query</param>
+			/// <param name="options"><see cref="IEnumerable{T}"/> of strings to select</param>
+			/// <returns></returns>
 		public async Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string query, IEnumerable<QueryOption> options = null)
 		{
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
@@ -83,7 +76,7 @@ namespace dotnetAccountant
 			{
 				request.Content = stringContent;
 				await AuthProvider.Instance.AuthenticateRequestAsync(request);
-				using (var response = await client.HttpProvider.SendAsync(request,HttpCompletionOption.ResponseContentRead, cts.Token))
+				using (var response = await client.HttpProvider.SendAsync(request, HttpCompletionOption.ResponseContentRead, cts.Token))
 				{
 					return await response.Content.ReadAsStringAsync();
 				}
@@ -105,6 +98,36 @@ namespace dotnetAccountant
 			using (var cts = new CancellationTokenSource(Timeouts.Silent))
 			{
 				return await client.Me.Drive.Items[itemId].Content.Request().PutAsync<DriveItem>(stream, cts.Token);
+			}
+		}
+
+		public async Task<(List<DriveItem> folders, List<DriveItem> files)> GetFolersAndFilesAsync(string parentId)
+		{
+			using (var cts = new CancellationTokenSource(Timeouts.Silent))
+			{
+				var folders = new List<DriveItem>();
+				var files = new List<DriveItem>();
+				IDriveItemChildrenCollectionPage page;
+				do
+				{
+					page = await GetChildrenAsync(parentId);
+					folders.AddRange(page.Where(item => item.Folder != null));
+					files.AddRange(page.Where(item => item.File != null));
+				} while (page.NextPageRequest != null);
+				return (folders, files);
+			}
+		}
+
+		/// <summary>
+			/// Get subfolders and files in a folder with <paramref name="parentId"/>
+			/// </summary>
+			/// <param name="parentId"></param>
+			/// <returns></returns>
+		public async Task<IDriveItemChildrenCollectionPage> GetChildrenAsync(string parentId)
+		{
+			using (var cts = new CancellationTokenSource(Timeouts.Silent))
+			{
+				return await client.Me.Drive.Items[parentId].Children.Request().GetAsync(cts.Token);
 			}
 		}
 	}
