@@ -11,32 +11,32 @@ namespace dotnetAccountant.Tests
 	public class AuthProviderTests
 	{
 		private IConfigurationRoot appConfig;
+		private AuthProvider authProvider;
 
 		public AuthProviderTests(){
 			appConfig = Program.GetAppConfig();
 			AuthProvider.Initialize(appConfig);
+			authProvider = AuthProvider.Instance;
 		}
 
 		[Fact]
-		public void SingletonTest()
+		public void GetAuthProvider_EqualToOriginal()
 		{
 			//Given
-			var authProvider1 = AuthProvider.Instance;
 			//When
-			var authProvider2 = AuthProvider.Instance;
+			var authProvider1 = AuthProvider.Instance;
 			//Then
-			Assert.Equal(authProvider1, authProvider2);
+			Assert.Equal(authProvider1, authProvider);
 
 		}
 		
 		[Fact]
-		public void GetAccessTokenWithUsernamePasswordTest()
+		public void GetAccessTokenWithUsernamePassword_ResultNotNull()
 		{
-			// Arrange
-			var authProvider = AuthProvider.Instance;
-			// Act
+			//Given
+			//When
 			var token = authProvider.GetAccessTokenWithUsernamePassword().Result;
-			// Assert
+			//Then
 			Assert.NotNull(token);
 		}
 	}

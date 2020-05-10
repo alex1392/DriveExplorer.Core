@@ -15,6 +15,7 @@ namespace dotnetAccountant.Tests
 	{
 		private IConfigurationRoot appConfig;
 		private AuthProvider authProvider;
+		private GraphManager graphManager;
 
 		public GraphManagerTests()
 		{
@@ -22,38 +23,24 @@ namespace dotnetAccountant.Tests
 			AuthProvider.Initialize(appConfig);
 			GraphManager.Initialize(AuthProvider.Instance);
 			authProvider = AuthProvider.Instance;
+			graphManager = GraphManager.Instance;
 		}
 
 		[Fact]
-		public void SingletonTest()
+		public void GetGraphManager_EqualToOriginal()
 		{
 			//Given
+			//When
 			var graphManager1 = GraphManager.Instance;
-			//When
-			var graphManager2 = GraphManager.Instance;
 			//Then
-			Assert.Equal(graphManager1, graphManager2);
+			Assert.Equal(graphManager, graphManager1);
 		}
 
 		[Fact]
-		public void TimeoutTest()
+		public void GetUser_UserMailEqualToUsernameInAppConfig()
 		{
 			//Given
-			var graphManager = GraphManager.Instance;
-			//When
-
-			//Then
-			Assert.ThrowsAsync(typeof(TimeoutException),
-				() => graphManager.GetMeAsync(millisecondsDelay: (int)Timeouts.Silent.TotalMilliseconds));
-		}
-
-		[Fact]
-		public void GetMeTest()
-		{
-			//Given
-			// set scopes of authProvider before generating graphManager
 			authProvider.Scopes = new[] { Permissions.User.Read };
-			var graphManager = GraphManager.Instance;
 			string Username = appConfig[nameof(Username)];
 			//When
 			var user = graphManager.GetMeAsync().Result;
@@ -63,29 +50,26 @@ namespace dotnetAccountant.Tests
 		}
 
 		[Fact]
-		public void SearchDriveTest()
+		public void SearchDrive_ResultNotNull()
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			var graphManager = GraphManager.Instance;
 			//When
-			var items = graphManager.SearchDriveAsync("LICENSE.txt",
+			var file = graphManager.SearchDriveAsync("LICENSE.txt",
 				new[] {
 					new QueryOption("$top", "5"),
 					new QueryOption("$select", Selects.name + "," + Selects.id)
-					}).Result.CurrentPage;
-			var file = items.First();
+					}).Result.First();
 			Console.WriteLine(file.Name);
 			//Then
 			Assert.NotNull(file);
 		}
 
 		[Fact]
-		public void DownloadFileTest()
+		public void DownloadFile_ResultNotNull()
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			var graphManager = GraphManager.Instance;
 			//When
 			var item = graphManager.SearchDriveAsync("LICENSE.txt").Result.CurrentPage.First();
 			var stream = graphManager.GetFileAsync(item.Id).Result;
@@ -100,11 +84,10 @@ namespace dotnetAccountant.Tests
 		}
 
 		[Fact]
-		public void GetDriveRootTest()
+		public void GetDriveRoot_ResultNotNull()
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			var graphManager = GraphManager.Instance;
 			//When
 			var item = graphManager.GetDriveRootAsync().Result;
 			Console.WriteLine(item.Name);
@@ -113,11 +96,42 @@ namespace dotnetAccountant.Tests
 		}
 
 		[Fact]
-		public void UpdateFileTest()
+		public void GetChildrenOfRoot_ResultNotNull()
+		{
+			//Given
+			authProvider.Scopes = new[] { Permissions.Files.Read };
+			//When
+			var root = graphManager.GetDriveRootAsync().Result;
+			var children = graphManager.GetChildrenAsync(root.Id).Result;
+			foreach (var child in children)
+			{
+				Console.WriteLine(child.Name);
+			}
+			//Then
+			Assert.NotNull(children);
+		}
+
+		[Fact]
+		public void GetFoldersAndFilesOfRoot_ResultNotNull()
+		{
+			//Given
+			authProvider.Scopes = new[] { Permissions.Files.Read };
+			//When
+			var root = graphManager.GetDriveRootAsync().Result;
+			var (folders, files) = graphManager.GetFolersAndFilesAsync(root.Id).Result;
+			Console.WriteLine("=====Folders=====");
+			folders.ForEach(folder => Console.WriteLine(folder.Name));
+			Console.WriteLine("=====Files=====");
+			files.ForEach(file => Console.WriteLine(file.Name));
+			//Then
+			Assert.True(folders != null || files != null);
+		}
+
+		[Fact]
+		public void UpdateFile_ResultNotNull()
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
-			var graphManager = GraphManager.Instance;
 			//When
 			var itemId = graphManager.SearchDriveAsync("LICENSE.txt").Result.FirstOrDefault()?.Id;
 			var content = "aaa";
@@ -128,11 +142,10 @@ namespace dotnetAccountant.Tests
 		}
 
 		[Fact]
-		public void UploadFileTest()
+		public void UploadFile_ResultNotNull()
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
-			var graphManager = GraphManager.Instance;
 			//When
 			var content = "aaa";
 			var parentId = graphManager.GetDriveRootAsync().Result.Id;
