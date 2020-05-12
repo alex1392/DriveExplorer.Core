@@ -8,6 +8,10 @@ using System.Linq;
 using System.Net;
 using System.IO;
 using System.Text;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Moq;
 
 namespace dotnetAccountant.Tests
 {
@@ -19,7 +23,9 @@ namespace dotnetAccountant.Tests
 
 		public GraphManagerTests()
 		{
-			appConfig = Program.GetAppConfig();
+			appConfig = new ConfigurationBuilder()
+				.AddUserSecrets<GraphManagerTests>()
+				.Build();
 			AuthProvider.Initialize(appConfig);
 			GraphManager.Initialize(AuthProvider.Instance);
 			authProvider = AuthProvider.Instance;
@@ -46,7 +52,7 @@ namespace dotnetAccountant.Tests
 			var user = graphManager.GetMeAsync().Result;
 			Console.WriteLine(user.DisplayName);
 			//Then
-			Assert.Equal(user.Mail, Username);
+			Assert.Equal(Username, user.Mail);
 		}
 
 		[Fact]
@@ -70,8 +76,8 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			//When
 			var item = graphManager.SearchDriveAsync("LICENSE.txt").Result.CurrentPage.First();
+			//When
 			var stream = graphManager.GetFileAsync(item.Id).Result;
 			string content;
 			using (var reader = new StreamReader(stream))
@@ -100,8 +106,8 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			//When
 			var root = graphManager.GetDriveRootAsync().Result;
+			//When
 			var children = graphManager.GetChildrenAsync(root.Id).Result;
 			foreach (var child in children)
 			{
@@ -116,8 +122,8 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
-			//When
 			var root = graphManager.GetDriveRootAsync().Result;
+			//When
 			var (folders, files) = graphManager.GetFolersAndFilesAsync(root.Id).Result;
 			Console.WriteLine("=====Folders=====");
 			folders.ForEach(folder => Console.WriteLine(folder.Name));
@@ -132,9 +138,9 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
-			//When
 			var itemId = graphManager.SearchDriveAsync("LICENSE.txt").Result.FirstOrDefault()?.Id;
 			var content = "aaa";
+			//When
 			var driveItem = graphManager.UpdateFileAsync(itemId, content).Result;
 			Console.WriteLine(driveItem.Name);
 			//Then
@@ -146,14 +152,64 @@ namespace dotnetAccountant.Tests
 		{
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
-			//When
 			var content = "aaa";
 			var parentId = graphManager.GetDriveRootAsync().Result.Id;
 			var filename = "aaa.txt";
+			//When
 			var response = graphManager.UploadFileAsync(parentId, filename, content).Result;
 			Console.WriteLine(response);
 			//Then
 			Assert.NotNull(response);
+		}
+	}
+
+	public class GraphApiCallTests
+	{
+		class User
+		{
+			[JsonProperty("@odata.context")]
+			public string context;
+			public string[] businessPhones;
+			public string displayName;
+			public string givenName;
+			public string jobTitle;
+			public string mail;
+			public string mobilePhone;
+			public string officeLocation;
+			public string preferredLanguage;
+			public string surname;
+			public string userPrincipalName;
+			public string id;
+		}
+
+		[Fact]
+		public void GetUserApiCall_ResultNotNull()
+		{
+			//Given
+			var appConfig = new ConfigurationBuilder()
+				.AddUserSecrets<GraphManagerTests>()
+				.Build();
+			AuthProvider.Initialize(appConfig);
+			AuthProvider.Instance.Scopes = new[] { Permissions.User.Read };
+			var url = $"{Urls.BaseUrl}me/";
+			var request = new HttpRequestMessage(HttpMethod.Get, url);
+			AuthProvider.Instance.AuthenticateRequestAsync(request).Wait();
+			//When
+			TimeSpan timeout = TimeSpan.FromSeconds(5);
+			HttpResponseMessage response;
+			using (var client = new HttpClient())
+			{
+				client.Timeout = timeout;
+				response = client.SendAsync(request).Result;
+			}
+			var responseBody = response.Content.ReadAsStringAsync().Result;
+			Console.WriteLine(responseBody);
+			var jObject = JObject.Parse(responseBody);
+			var jString = jObject.ToString();
+			Console.WriteLine(jString);
+			var user = JsonConvert.DeserializeObject<User>(responseBody);
+			//Then
+			Assert.NotNull(responseBody);
 		}
 	}
 }
