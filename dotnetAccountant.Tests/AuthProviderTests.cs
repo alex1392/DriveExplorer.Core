@@ -14,7 +14,9 @@ namespace dotnetAccountant.Tests
 		private AuthProvider authProvider;
 
 		public AuthProviderTests(){
-			appConfig = Program.GetAppConfig();
+			appConfig = new ConfigurationBuilder()
+				.AddUserSecrets<GraphManagerTests>()
+				.Build();
 			AuthProvider.Initialize(appConfig);
 			authProvider = AuthProvider.Instance;
 		}
@@ -26,7 +28,7 @@ namespace dotnetAccountant.Tests
 			//When
 			var authProvider1 = AuthProvider.Instance;
 			//Then
-			Assert.Equal(authProvider1, authProvider);
+			Assert.Equal(authProvider, authProvider1);
 
 		}
 		
