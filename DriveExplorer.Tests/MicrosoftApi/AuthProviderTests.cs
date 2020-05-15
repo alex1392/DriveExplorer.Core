@@ -1,12 +1,7 @@
-using System;
 using Xunit;
-using dotnetAccountant;
-using Microsoft.Graph;
-using Microsoft.Identity.Client;
 using Microsoft.Extensions.Configuration;
-using Moq;
 
-namespace dotnetAccountant.Tests
+namespace DriveExplorer.MicrosoftApi
 {
 	public class AuthProviderTests
 	{

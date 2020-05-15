@@ -10,7 +10,7 @@ using System.Threading;
 using System.Linq;
 using System.Security;
 
-namespace dotnetAccountant
+namespace DriveExplorer.MicrosoftApi
 {
 	public class AuthProvider : IAuthenticationProvider
 	{

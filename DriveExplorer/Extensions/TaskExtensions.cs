@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace dotnetAccountant
+namespace DriveExplorer
 {
 	public static class TaskExtensions
 	{

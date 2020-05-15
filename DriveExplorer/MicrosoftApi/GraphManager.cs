@@ -9,7 +9,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 
-namespace dotnetAccountant
+namespace DriveExplorer.MicrosoftApi
 {
 	public class GraphManager
 	{

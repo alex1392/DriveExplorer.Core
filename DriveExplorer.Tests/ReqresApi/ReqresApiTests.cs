@@ -1,16 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using Xunit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Moq;
-using System.Net;
 using System.Threading.Tasks;
 using RichardSzalay.MockHttp;
 using System.Text;
 
-namespace dotnetAccountant.Tests
+namespace DriveExplorer.ReqresApi
 {
 	public class ReqresApiTests
 	{

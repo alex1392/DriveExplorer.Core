@@ -1,19 +1,14 @@
 using Xunit;
 using System;
-using dotnetAccountant;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
 using Microsoft.Graph;
 using System.Linq;
-using System.Net;
 using System.IO;
-using System.Text;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using Moq;
 
-namespace dotnetAccountant.Tests
+namespace DriveExplorer.MicrosoftApi
 {
 	public class GraphManagerTests
 	{

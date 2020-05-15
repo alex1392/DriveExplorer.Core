@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 
-namespace dotnetAccountant
+namespace DriveExplorer
 {
     public class Program
     {

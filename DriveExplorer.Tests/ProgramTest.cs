@@ -1,7 +1,6 @@
-
 using Xunit;
 
-namespace dotnetAccountant.Tests
+namespace DriveExplorer
 {
 	public class ProgramTests
 	{
