@@ -33,6 +33,7 @@ namespace dotnetAccountant
 		private GraphManager(IAuthenticationProvider authProvider)
 		{
 			client = new GraphServiceClient(authProvider);
+			
 		}
 
 		public async Task<User> GetMeAsync()
@@ -75,7 +76,7 @@ namespace dotnetAccountant
 			using (var stringContent = new StringContent(content, Encoding.UTF8))
 			{
 				request.Content = stringContent;
-				await AuthProvider.Instance.AuthenticateRequestAsync(request);
+				// await AuthProvider.Instance.AuthenticateRequestAsync(request);
 				using (var response = await client.HttpProvider.SendAsync(request, HttpCompletionOption.ResponseContentRead, cts.Token))
 				{
 					return await response.Content.ReadAsStringAsync();
