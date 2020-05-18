@@ -35,3 +35,16 @@ msbuild.wrn
 
 # Visual Studio 2015
 .vs/
+
+# client secrets for google api
+client_secret.json
+
+# formatter
+omnisharp.json
+
+# coverage
+lcov.info
+coverage.json
+
+# cmd scripts
+*.cmd
