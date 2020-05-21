@@ -45,6 +45,8 @@ omnisharp.json
 # coverage
 lcov.info
 coverage.json
+dotcover/
+dotcover.html
 
 # cmd scripts
 *.cmd
