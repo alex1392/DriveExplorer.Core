@@ -4,6 +4,12 @@ using Xunit;
 
 namespace DriveExplorer.IoC {
 	public class IocContainerTests {
+		private IocContainer ioc;
+
+		public IocContainerTests() {
+			ioc = new IocContainer();
+		}
+
 		[Fact]
 		public void GetDefaultIocTwice_IdenticalInstances() {
 			//Given
@@ -17,7 +23,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void Reset_IsRegister_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 			//When
 			ioc.Reset();
@@ -29,7 +35,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void DoRegisterClass_IsRegister_True() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 			//When
 			var conditionA = ioc.IsRegistered<MyClass>();
@@ -40,7 +46,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void NoRegisterClass_IsRegister_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			//When
 			var conditionB = ioc.IsRegistered<MyClass>();
 			//Then
@@ -50,7 +56,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void NoRegisterClass_GetInstance_Throws() {
 			//Given
-			var ioc = new IocContainer();
+
 			//When
 			Func<MyClass> func = ioc.GetInstance<MyClass>;
 			//Then
@@ -60,7 +66,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void DoGetInstanceTwice_IdenticalInstances() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 			var instanceA = ioc.GetInstance<MyClass>();
 			//When
@@ -72,7 +78,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void RegisterDependedClass_GetDependentClassInstance_ResultNotNull() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<DependedClass>();
 			ioc.Register<DependentClass>();
 			//When
@@ -84,7 +90,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void NoRegisterDependedClass_GetDependentClassInstance_Throws() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<DependentClass>();
 			//When
 			Func<DependentClass> func = ioc.GetInstance<DependentClass>;
@@ -95,7 +101,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void DoGetInstanceClass_IsCreated_True() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 			var instanceA = ioc.GetInstance<MyClass>();
 			//When
@@ -107,7 +113,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void NoGetInstanceClass_IsCreated_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 
 			//When
@@ -120,7 +126,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void DoRegisterInterface_IsRegistered_True() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<IClass, MyClass>();
 			//When
 			var condition = ioc.IsRegistered<IClass>();
@@ -131,7 +137,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void NoRegisterInterface_IsRegistered_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			//When
 			var condition = ioc.IsRegistered<IClass>();
 			//Then
@@ -141,7 +147,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void DoGetInstanceInterface_IsCreated_True() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<IClass, MyClass>();
 			var instance = ioc.GetInstance<IClass>();
 			//When
@@ -153,7 +159,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void NoGetInstanceInterface_IsCreated_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<IClass, MyClass>();
 			//When
 			var condition = ioc.IsCreated<IClass>();
@@ -164,7 +170,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void DoRegisterInterfaceWithClass_GetInstance_InstanceIsClass() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<IClass, MyClass>();
 			//When
 			var instance = ioc.GetInstance<IClass>();
@@ -175,7 +181,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void RegisterClassTwice_ThrowError() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 			//When
 			Action action = ioc.Register<MyClass>;
@@ -186,7 +192,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void RegisterInterfaceTwice_ThorwsError() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<IClass, MyClass>();
 			//When
 			Action action = ioc.Register<IClass, MyClass>;
@@ -197,7 +203,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void RegisterInterfaceWithRegisterClass_Throws() {
 			//Given
-			var ioc = new IocContainer();
+
 			//When
 			Action action = ioc.Register<IClass>;
 			//Then
@@ -207,7 +213,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void RegisterClassWithRegisterInterface_Throws() {
 			//Given
-			var ioc = new IocContainer();
+
 			//When
 			Action action = ioc.Register<MyClass, MyClass>;
 			//Then
@@ -217,7 +223,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void UnregisterClass_IsRegistered_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<MyClass>();
 			ioc.Unregister<MyClass>();
 			//When
@@ -229,7 +235,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void UnregisterInterface_IsRegistered_False() {
 			//Given
-			var ioc = new IocContainer();
+
 			ioc.Register<IClass, MyClass>();
 			ioc.Unregister<IClass>();
 			//When
@@ -241,7 +247,7 @@ namespace DriveExplorer.IoC {
 		[Fact]
 		public void RegisterClassWithoutPublicCtor_Throws() {
 			//Given
-			var ioc = new IocContainer();
+
 			//When
 			Action action = ioc.Register<ClassWithoutPublicCtor>;
 			//Then
