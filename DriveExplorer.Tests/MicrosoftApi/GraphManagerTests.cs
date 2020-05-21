@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Xunit;
 using System;
 using Microsoft.Extensions.Configuration;
@@ -8,28 +9,37 @@ using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
-namespace DriveExplorer.MicrosoftApi
-{
-	public class GraphManagerTests
-	{
-		private IConfigurationRoot appConfig;
-		private AuthProvider authProvider;
-		private GraphManager graphManager;
+namespace DriveExplorer.MicrosoftApi {
+	public class GraphManagerTestFixture {
+		public IConfigurationRoot appConfig;
+		public AuthProvider authProvider;
+		public GraphManager graphManager;
 
-		public GraphManagerTests()
-		{
+		public GraphManagerTestFixture() {
 			appConfig = new ConfigurationBuilder()
-				.AddUserSecrets<GraphManagerTests>()
-				.Build();
+							.AddUserSecrets<GraphManagerTests>()
+							.Build();
 			AuthProvider.Initialize(appConfig);
 			GraphManager.Initialize(AuthProvider.Instance);
 			authProvider = AuthProvider.Instance;
 			graphManager = GraphManager.Instance;
 		}
 
+	}
+	public class GraphManagerTests : IClassFixture<GraphManagerTestFixture> {
+		private IConfigurationRoot appConfig;
+		private AuthProvider authProvider;
+		private GraphManager graphManager;
+
+		public GraphManagerTests(GraphManagerTestFixture fixture) {
+			appConfig = fixture.appConfig;
+			authProvider = fixture.authProvider;
+			graphManager = fixture.graphManager;
+			Debug.WriteLine(graphManager.GetHashCode());
+		}
+
 		[Fact]
-		public void GetGraphManager_EqualToOriginal()
-		{
+		public void GetGraphManager_EqualToOriginal() {
 			//Given
 			//When
 			var graphManager1 = GraphManager.Instance;
@@ -38,8 +48,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void GetUser_UserMailEqualToUsernameInAppConfig()
-		{
+		public void GetUser_UserMailEqualToUsernameInAppConfig() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.User.Read };
 			string Username = appConfig[nameof(Username)];
@@ -51,8 +60,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void SearchDrive_ResultNotNull()
-		{
+		public void SearchDrive_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
 			//When
@@ -67,16 +75,14 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void DownloadFile_ResultNotNull()
-		{
+		public void DownloadFile_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
 			var item = graphManager.SearchDriveAsync("LICENSE.txt").Result.CurrentPage.First();
 			//When
 			var stream = graphManager.GetFileAsync(item.Id).Result;
 			string content;
-			using (var reader = new StreamReader(stream))
-			{
+			using (var reader = new StreamReader(stream)) {
 				content = reader.ReadToEnd();
 				Console.WriteLine(content);
 			}
@@ -85,8 +91,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void GetDriveRoot_ResultNotNull()
-		{
+		public void GetDriveRoot_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
 			//When
@@ -97,15 +102,13 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void GetChildrenOfRoot_ResultNotNull()
-		{
+		public void GetChildrenOfRoot_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
 			var root = graphManager.GetDriveRootAsync().Result;
 			//When
 			var children = graphManager.GetChildrenAsync(root.Id).Result;
-			foreach (var child in children)
-			{
+			foreach (var child in children) {
 				Console.WriteLine(child.Name);
 			}
 			//Then
@@ -113,8 +116,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void GetFoldersAndFilesOfRoot_ResultNotNull()
-		{
+		public void GetFoldersAndFilesOfRoot_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.Read };
 			var root = graphManager.GetDriveRootAsync().Result;
@@ -129,8 +131,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void UpdateFile_ResultNotNull()
-		{
+		public void UpdateFile_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
 			var itemId = graphManager.SearchDriveAsync("LICENSE.txt").Result.FirstOrDefault()?.Id;
@@ -143,8 +144,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void UploadFile_ResultNotNull()
-		{
+		public void UploadFile_ResultNotNull() {
 			//Given
 			authProvider.Scopes = new[] { Permissions.Files.ReadWrite };
 			var content = "aaa";
@@ -158,10 +158,8 @@ namespace DriveExplorer.MicrosoftApi
 		}
 	}
 
-	public class GraphApiCallTests
-	{
-		class User
-		{
+	public class GraphApiCallTests {
+		class User {
 			[JsonProperty("@odata.context")]
 			public string context;
 			public string[] businessPhones;
@@ -178,8 +176,7 @@ namespace DriveExplorer.MicrosoftApi
 		}
 
 		[Fact]
-		public void GetUserApiCall_ResultNotNull()
-		{
+		public void GetUserApiCall_ResultNotNull() {
 			//Given
 			var appConfig = new ConfigurationBuilder()
 				.AddUserSecrets<GraphManagerTests>()
@@ -192,8 +189,7 @@ namespace DriveExplorer.MicrosoftApi
 			//When
 			TimeSpan timeout = TimeSpan.FromSeconds(5);
 			HttpResponseMessage response;
-			using (var client = new HttpClient())
-			{
+			using (var client = new HttpClient()) {
 				client.Timeout = timeout;
 				response = client.SendAsync(request).Result;
 			}
